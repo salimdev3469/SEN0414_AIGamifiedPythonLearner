@@ -1,0 +1,644 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Friends - Python Learner AI{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 0;">
+    <div class="page-header">
+        <h1>👥 Friends & Leaderboard</h1>
+        <p>Connect with other learners and compete!</p>
+    </div>
+
+    {% if pending_requests %}
+        <div class="section">
+            <h2>📬 Friend Requests ({{ pending_requests.count }})</h2>
+            <div class="requests-list">
+                {% for friendship in pending_requests %}
+                    <div class="request-card">
+                        <div class="request-user">
+                            <div class="request-avatar">
+                                {{ friendship.user.username|slice:":1"|upper }}
+                            </div>
+                            <div class="request-info">
+                                <strong class="request-username">{{ friendship.user.username }}</strong>
+                                <div class="request-stats">
+                                    <span class="stat-badge level">Level {{ friendship.user.level }}</span>
+                                    <span class="stat-badge xp">{{ friendship.user.xp }} XP</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="request-actions">
+                            <form method="post" action="{% url 'gamification:accept_friend_request' friendship.user.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-accept">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Accept
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'gamification:reject_friend_request' friendship.user.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-reject">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                    Reject
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="section">
+        <h2 style="text-align: center;">🔍 Find Friends</h2>
+        <div class="search-box">
+            <input type="text" id="friend-search" placeholder="Search by username..." />
+            <div id="search-results"></div>
+        </div>
+        {% csrf_token %}
+    </div>
+
+    <div class="section">
+        <h2>🏆 Friend Leaderboard</h2>
+        <div class="leaderboard">
+            {% for user in friend_leaderboard %}
+                <div class="leaderboard-item {% if user == request.user %}current-user{% endif %}">
+                    <span class="rank">#{{ forloop.counter }}</span>
+                    <span class="username">{{ user.username }}</span>
+                    <span class="level">Level {{ user.level }}</span>
+                    <span class="xp">{{ user.xp }} XP</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>👥 My Friends ({{ friends.count }})</h2>
+        {% if friends %}
+            <div class="friends-grid">
+                {% for friend in friends %}
+                    <div class="friend-card">
+                        <div class="friend-avatar">
+                            {{ friend.username|slice:":1"|upper }}
+                        </div>
+                        <div class="friend-details">
+                            <h3 class="friend-name">{{ friend.username }}</h3>
+                            <div class="friend-stats">
+                                <span class="stat-badge level">Level {{ friend.level }}</span>
+                                <span class="stat-badge xp">{{ friend.xp }} XP</span>
+                            </div>
+                        </div>
+                        <div class="friend-actions">
+                            <a href="{% url 'gamification:user_profile' friend.username %}" class="btn btn-view">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                View Profile
+                            </a>
+                            <button type="button" class="btn btn-remove" onclick="removeFriend({{ friend.id }}, '{{ friend.username }}')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <h3>No Friends Yet</h3>
+                <p>Search above to find and add friends!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .section {
+        margin-bottom: 3rem;
+    }
+    
+    .section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .search-box {
+        position: relative;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    #friend-search {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    
+    #search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        z-index: 10;
+    }
+    
+    .search-result-item {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+    }
+    
+    .search-result-item:hover {
+        background: #f9fafb;
+    }
+    
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .requests-list {
+        display: grid;
+        gap: 1rem;
+    }
+    
+    .request-card {
+        background: white;
+        border: 2px solid #fbbf24;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s;
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    }
+    
+    .request-card:hover {
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .request-user {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .request-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    .request-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .request-username {
+        font-size: 1.125rem;
+        color: #1f2937;
+    }
+    
+    .request-stats {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .request-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .friends-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .friend-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .friend-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        transform: translateY(-4px);
+    }
+    
+    .friend-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .friend-details {
+        margin-bottom: 1rem;
+        width: 100%;
+    }
+    
+    .friend-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .friend-stats {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .stat-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .stat-badge.level {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .stat-badge.xp {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .friend-actions {
+        display: flex;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .btn {
+        padding: 0.625rem 1rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .friend-actions .btn-view,
+    .friend-actions .btn-remove {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .btn-accept {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-accept:hover {
+        background: #059669;
+    }
+    
+    .btn-reject, .btn-remove {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-reject:hover, .btn-remove:hover {
+        background: #dc2626;
+    }
+    
+    .btn-view {
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-view:hover {
+        background: #5568d3;
+    }
+    
+    .leaderboard {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .leaderboard-item {
+        display: grid;
+        grid-template-columns: 50px 1fr auto auto;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .leaderboard-item.current-user {
+        background: #f0fdf4;
+        font-weight: 600;
+    }
+    
+    .leaderboard-item .rank {
+        font-weight: 700;
+        color: #f59e0b;
+        text-align: left;
+    }
+    
+    .leaderboard-item .username {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .leaderboard-item .level {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        background: #dbeafe;
+        color: #1e40af;
+        font-size: 0.875rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .leaderboard-item .xp {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-align: right;
+        min-width: 80px;
+        white-space: nowrap;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        border-radius: 16px;
+        border: 2px dashed #d1d5db;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        color: #6b7280;
+        font-size: 1rem;
+    }
+</style>
+
+<script>
+    const searchInput = document.getElementById('friend-search');
+    const searchResults = document.getElementById('search-results');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let searchTimeout;
+    
+    // Function to get status display text
+    function getStatusText(status) {
+        const statusMap = {
+            'none': '',
+            'pending': 'Request Pending',
+            'accepted': 'Already Friends',
+            'rejected': 'Request Rejected'
+        };
+        return statusMap[status] || status;
+    }
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            fetch(`{% url 'gamification:friend_search' %}?q=${encodeURIComponent(query)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.users.length > 0) {
+                        searchResults.innerHTML = data.users.map(user => {
+                            let actionButton = '';
+                            
+                            if (user.friendship_status === 'none') {
+                                const requestUrl = `/friends/request/${user.id}/`;
+                                actionButton = `
+                                    <button class="btn btn-accept" onclick="sendFriendRequest(${user.id}, this); return false;">Add Friend</button>
+                                `;
+                            } else {
+                                const statusText = getStatusText(user.friendship_status);
+                                actionButton = `<span style="color: #6b7280; font-size: 0.875rem;">${statusText}</span>`;
+                            }
+                            
+                            return `
+                                <div class="search-result-item" data-user-id="${user.id}">
+                                    <div>
+                                        <div><strong>${user.username}</strong></div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">Level ${user.level} • ${user.xp} XP</div>
+                                    </div>
+                                    <div class="search-result-action">
+                                        ${actionButton}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        searchResults.style.display = 'block';
+                    } else {
+                        searchResults.innerHTML = '<div style="padding: 1rem; text-align: center; color: #6b7280;">No users found</div>';
+                        searchResults.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.error('Search error:', err);
+                    searchResults.innerHTML = '<div style="padding: 1rem; text-align: center; color: #ef4444;">Error searching users</div>';
+                    searchResults.style.display = 'block';
+                });
+        }, 300);
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+    
+    // Send friend request via AJAX
+    async function sendFriendRequest(userId, button) {
+        button.disabled = true;
+        button.textContent = 'Sending...';
+        
+        try {
+            const response = await fetch(`/friends/request/${userId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // Update button to show pending status
+                const resultItem = button.closest('.search-result-item');
+                const actionDiv = resultItem.querySelector('.search-result-action');
+                actionDiv.innerHTML = '<span style="color: #f59e0b; font-size: 0.875rem; font-weight: 600;">Request Pending</span>';
+                
+                // Show success message
+                showNotification(data.message || 'Friend request sent successfully!', 'success');
+            } else {
+                button.disabled = false;
+                button.textContent = 'Add Friend';
+                showNotification(data.error || 'Failed to send friend request', 'error');
+            }
+        } catch (error) {
+            console.error('Error sending friend request:', error);
+            button.disabled = false;
+            button.textContent = 'Add Friend';
+            showNotification('Network error. Please try again.', 'error');
+        }
+    }
+    
+    // Show notification
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? '#10b981' : '#ef4444'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Remove friend
+    function removeFriend(userId, username) {
+        if (!confirm(`Remove ${username} from your friends?`)) {
+            return;
+        }
+        
+        fetch(`/friends/remove/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message || 'Friend removed successfully!', 'success');
+                // Reload page after 1 second
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.error || 'Failed to remove friend', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error removing friend:', error);
+            showNotification('Network error. Please try again.', 'error');
+        });
+    }
+</script>
+
+<style>
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+</style>
+{% endblock %}
+

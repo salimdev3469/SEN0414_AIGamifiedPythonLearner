@@ -1,0 +1,187 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Dashboard - Python Learner AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 20px;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-header h1 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card h3 {
+        color: #667eea;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .progress-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .progress-bar-container {
+        background: #e0e0e0;
+        height: 30px;
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+        margin: 1rem 0;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .level-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        padding: 1rem;
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: #667eea;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .action-btn:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>🎮 Welcome, {{ user.username }}!</h1>
+        <p>Level {{ user.level }} Python Developer <span class="level-badge">{{ user.xp }} XP</span></p>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>📊 Current Level</h3>
+            <div class="stat-value">{{ user.level }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>⭐ Total XP</h3>
+            <div class="stat-value">{{ user.xp }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>✅ Exercises Completed</h3>
+            <div class="stat-value">{{ user.total_exercises_completed }}</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>📚 Lessons Completed</h3>
+            <div class="stat-value">{{ user.total_lessons_completed }}</div>
+        </div>
+    </div>
+    
+    <div class="progress-section">
+        <h2>🎯 Progress to Level {{ user.level|add:1 }}</h2>
+        <p>{{ xp_needed|floatformat:0 }} XP needed for next level</p>
+        
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ xp_progress }}%; min-width: {% if xp_progress > 0 %}2%{% else %}0%{% endif %};">
+                {% if xp_progress > 0 %}{{ xp_progress }}%{% endif %}
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.875rem; color: #666;">
+            <span><strong>{{ user.xp|floatformat:0|default:"0" }}</strong> XP</span>
+            <span><strong>{{ xp_progress|default:"0" }}</strong>%</span>
+        </div>
+        
+        <p style="color: #666;">Keep learning to level up! 🚀</p>
+    </div>
+    
+    <div class="progress-section">
+        <h2>⚡ Quick Actions</h2>
+        <div class="quick-actions">
+            <a href="{% url 'learning:curriculum' %}" class="action-btn">
+                📖 View Curriculum
+            </a>
+            <a href="{% url 'coding:all_exercises' %}" class="action-btn">
+                💻 Practice Coding
+            </a>
+            <a href="{% url 'auth:leaderboard' %}" class="action-btn">
+                🏆 Leaderboard
+            </a>
+            <a href="{% url 'auth:profile' %}" class="action-btn">
+                👤 Edit Profile
+            </a>
+        </div>
+    </div>
+    
+    {% if recent_badges %}
+    <div class="progress-section">
+        <h2>🏅 Recent Badges</h2>
+        <!-- Badges will be shown here when gamification is implemented -->
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

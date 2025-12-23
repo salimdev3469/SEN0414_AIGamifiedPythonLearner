@@ -1,0 +1,164 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Leaderboard - Python Learner AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leaderboard-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 20px;
+    }
+    
+    .leaderboard-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .leaderboard-header h1 {
+        font-size: 2.5rem;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .user-rank-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .user-rank-card h2 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .leaderboard-table {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .leaderboard-item {
+        display: grid;
+        grid-template-columns: 80px 1fr 120px 120px;
+        padding: 1.5rem;
+        border-bottom: 1px solid #e0e0e0;
+        align-items: center;
+        transition: background 0.3s;
+    }
+    
+    .leaderboard-item:hover {
+        background: #f5f5f5;
+    }
+    
+    .leaderboard-item:last-child {
+        border-bottom: none;
+    }
+    
+    .rank {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .rank-1 { color: #FFD700; } /* Gold */
+    .rank-2 { color: #C0C0C0; } /* Silver */
+    .rank-3 { color: #CD7F32; } /* Bronze */
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.25rem;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .user-level {
+        color: #666;
+        font-size: 0.875rem;
+    }
+    
+    .user-xp {
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .user-exercises {
+        color: #666;
+    }
+    
+    .highlight {
+        background: #e8f5e9 !important;
+        border-left: 4px solid #4caf50;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="leaderboard-container">
+    <div class="leaderboard-header">
+        <h1>🏆 Leaderboard</h1>
+        <p>Top Python learners on the platform</p>
+    </div>
+    
+    <div class="user-rank-card">
+        <h2>Your Rank: #{{ user_rank }}</h2>
+        <p>Keep learning to climb higher! 🚀</p>
+    </div>
+    
+    <div class="leaderboard-table">
+        {% for user in top_users %}
+        <div class="leaderboard-item {% if user.username == request.user.username %}highlight{% endif %}">
+            <div class="rank rank-{{ forloop.counter }}">
+                {% if forloop.counter == 1 %}🥇
+                {% elif forloop.counter == 2 %}🥈
+                {% elif forloop.counter == 3 %}🥉
+                {% else %}#{{ forloop.counter }}
+                {% endif %}
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">
+                    {{ user.username.0|upper }}
+                </div>
+                <div>
+                    <div class="user-name">
+                        {{ user.username }}
+                        {% if user.username == request.user.username %}<span style="color: #4caf50;">← You!</span>{% endif %}
+                    </div>
+                    <div class="user-level">Level {{ user.level }}</div>
+                </div>
+            </div>
+            
+            <div class="user-xp">
+                {{ user.xp }} XP
+            </div>
+            
+            <div class="user-exercises">
+                {{ user.total_exercises_completed }} exercises
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

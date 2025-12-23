@@ -1,0 +1,411 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ lesson.title }} - Practice Exercises{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .exercises-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 20px 4rem;
+    }
+    
+    .exercises-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        padding: 3rem;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .exercises-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.05)"/></svg>');
+        opacity: 0.5;
+    }
+    
+    .exercises-header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .exercises-header h1 {
+        color: white;
+        margin-bottom: 1rem;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .exercises-breadcrumb {
+        margin-bottom: 2rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .exercises-breadcrumb a {
+        color: #f59e0b;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .exercises-breadcrumb a:hover {
+        color: #d97706;
+    }
+    
+    .exercises-stats {
+        background: white;
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon.total {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .stat-icon.solved {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    .stat-icon.progress {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stat-content h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: #1f2937;
+    }
+    
+    .stat-content p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .exercises-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .exercise-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+        border: 2px solid transparent;
+        position: relative;
+    }
+    
+    .exercise-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        border-color: #f59e0b;
+    }
+    
+    .exercise-card.solved {
+        border-color: #10b981;
+        background: linear-gradient(to right, #ecfdf5 0%, white 100%);
+    }
+    
+    .exercise-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .exercise-title {
+        flex: 1;
+    }
+    
+    .exercise-title h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .exercise-badges {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .badge-easy {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .badge-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-hard {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .badge-solved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .exercise-description {
+        color: #4b5563;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .exercise-meta {
+        display: flex;
+        gap: 2rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+    }
+    
+    .exercise-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .exercise-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+    
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+    
+    .solved-icon {
+        color: #10b981;
+        font-size: 1.5rem;
+    }
+    
+    .no-exercises {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .no-exercises-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .no-exercises h3 {
+        font-size: 1.5rem;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .no-exercises p {
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exercises-container">
+    <div class="exercises-breadcrumb">
+        <a href="{% url 'learning:curriculum' %}">Curriculum</a>
+        <span> / </span>
+        <a href="{% url 'learning:lesson_detail' lesson.id %}">{{ lesson.title }}</a>
+        <span> / </span>
+        <strong>Practice Exercises</strong>
+    </div>
+    
+    <div class="exercises-header">
+        <div class="exercises-header-content">
+            <h1>💪 Practice Exercises</h1>
+            <p style="font-size: 1.1rem; opacity: 0.95;">{{ lesson.title }} - {{ module.title }}</p>
+        </div>
+    </div>
+    
+    <div class="exercises-stats">
+        <div class="stat-item">
+            <div class="stat-icon total">📝</div>
+            <div class="stat-content">
+                <h3>{{ total_exercises }}</h3>
+                <p>Total Exercises</p>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon solved">✅</div>
+            <div class="stat-content">
+                <h3>{{ solved_exercises }}</h3>
+                <p>Solved</p>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon progress">📊</div>
+            <div class="stat-content">
+                <h3>{% widthratio solved_exercises total_exercises 100 %}%</h3>
+                <p>Progress</p>
+            </div>
+        </div>
+    </div>
+    
+    {% if exercises %}
+        <div class="exercises-grid">
+            {% for exercise in exercises %}
+                <div class="exercise-card {% if exercise.is_solved %}solved{% endif %}">
+                    <div class="exercise-card-header">
+                        <div class="exercise-title">
+                            <h3>
+                                {{ exercise.get_difficulty_display_emoji }}
+                                {{ exercise.title }}
+                                {% if exercise.is_solved %}
+                                    <span class="solved-icon">✓</span>
+                                {% endif %}
+                            </h3>
+                            <div class="exercise-badges">
+                                <span class="badge badge-{{ exercise.difficulty }}">
+                                    {{ exercise.get_difficulty_display }}
+                                </span>
+                                {% if exercise.is_solved %}
+                                    <span class="badge badge-solved">Solved ✓</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="exercise-description">
+                        {{ exercise.description|truncatewords:30 }}
+                    </div>
+                    
+                    <div class="exercise-meta">
+                        <span>⭐ {{ exercise.xp_reward }} XP</span>
+                        {% if exercise.attempts > 0 %}
+                            <span>🎯 {{ exercise.attempts }} Attempt{{ exercise.attempts|pluralize }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="exercise-actions">
+                        <a href="{% url 'coding:exercise_detail' exercise.id %}" class="btn btn-primary">
+                            {% if exercise.is_solved %}
+                                View Solution
+                            {% else %}
+                                Start Exercise
+                            {% endif %}
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-exercises">
+            <div class="no-exercises-icon">📝</div>
+            <h3>No Exercises Yet</h3>
+            <p>Exercises for this lesson are being prepared. Check back soon!</p>
+            <a href="{% url 'learning:lesson_detail' lesson.id %}" class="btn btn-secondary">
+                Back to Lesson
+            </a>
+        </div>
+    {% endif %}
+    
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'learning:lesson_detail' lesson.id %}" class="btn btn-secondary">
+            ← Back to Lesson
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+
+

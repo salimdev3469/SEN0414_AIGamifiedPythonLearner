@@ -1,0 +1,260 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Profile - Python Learner AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 20px;
+    }
+    
+    .profile-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+    
+    .level-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-top: 0.5rem;
+    }
+    
+    .profile-form {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 1.1rem;
+        transition: border-color 0.3s;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f5f5f5;
+        border-radius: 8px;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #666;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .progress-bar-container {
+        background: #e0e0e0;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 0.5rem;
+    }
+    
+    .error-list li {
+        color: #e74c3c;
+        font-size: 0.875rem;
+    }
+    
+    .password-change-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-top: 2rem;
+    }
+    
+    .btn-link {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: 600;
+        transition: transform 0.2s;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .btn-link:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="{{ user.username }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+            {% else %}
+                {{ user.username.0|upper }}
+            {% endif %}
+        </div>
+        
+        <h1>{{ user.username }}</h1>
+        <span class="level-badge">Level {{ user.level }} - {{ user.xp }} XP</span>
+        
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-label">Exercises</div>
+                <div class="stat-value">{{ user.total_exercises_completed }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Lessons</div>
+                <div class="stat-value">{{ user.total_lessons_completed }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Streak</div>
+                <div class="stat-value">{{ user.current_streak }}🔥</div>
+            </div>
+        </div>
+        
+        <div>
+            <strong>Next Level Progress:</strong>
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: {{ xp_progress }}%; min-width: {% if xp_progress > 0 %}2%{% else %}0%{% endif %};">
+                    {% if xp_progress > 0 %}{{ xp_progress }}%{% endif %}
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.875rem; color: #666;">
+                <span><strong>{{ user.xp|floatformat:0|default:"0" }}</strong> XP</span>
+                <span><strong>{{ xp_progress|default:"0" }}</strong>%</span>
+            </div>
+            <small>{{ xp_needed|floatformat:0 }} XP to Level {{ user.level|add:1 }}</small>
+        </div>
+    </div>
+    
+    <div class="profile-form">
+        <h2>✏️ Edit Profile</h2>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                
+                {% if field.errors %}
+                    <ul class="error-list">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn-submit">💾 Save Changes</button>
+        </form>
+    </div>
+    
+    <div class="password-change-section">
+        <h2>🔐 Change Password</h2>
+        <p style="color: #666; margin-bottom: 1.5rem;">Update your account password to keep your account secure.</p>
+        <a href="{% url 'auth:password_change' %}" class="btn-link">Change Password</a>
+    </div>
+    
+    <div class="password-change-section">
+        <h2>📧 Change Email</h2>
+        <p style="color: #666; margin-bottom: 1.5rem;">Update your email address. You'll need to enter your current password to confirm.</p>
+        <a href="{% url 'auth:email_change' %}" class="btn-link">Change Email</a>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,232 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Practice Exercises - Python Learner AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exercises-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+    }
+    
+    .exercises-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+    }
+    
+    .exercises-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .exercises-header p {
+        font-size: 1.125rem;
+        opacity: 0.9;
+    }
+    
+    .lesson-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .lesson-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-top: 4px solid #f59e0b;
+    }
+    
+    .lesson-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .lesson-card-header {
+        margin-bottom: 1rem;
+    }
+    
+    .module-tag {
+        display: inline-block;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .lesson-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .lesson-stats {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .progress-bar-container {
+        background: #e5e7eb;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        transition: width 0.5s ease;
+    }
+    
+    .progress-text {
+        font-size: 0.875rem;
+        color: #059669;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .btn-practice {
+        display: block;
+        width: 100%;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn-practice:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h2 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+    
+    .btn-primary {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exercises-container">
+    <div class="exercises-header">
+        <h1>💻 Practice Exercises</h1>
+        <p>Challenge yourself with coding exercises from completed lessons</p>
+    </div>
+    
+    {% if lessons_with_exercises %}
+        <div class="lesson-grid">
+            {% for item in lessons_with_exercises %}
+                <div class="lesson-card">
+                    <div class="lesson-card-header">
+                        <div class="module-tag">{{ item.module.title }}</div>
+                        <h3 class="lesson-title">{{ item.lesson.title }}</h3>
+                    </div>
+                    
+                    <div class="lesson-stats">
+                        <div class="stat-item">
+                            <span>📝</span>
+                            <span>{{ item.total_exercises }} Exercises</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>✅</span>
+                            <span>{{ item.completed_exercises }} Solved</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: {{ item.completion_percentage }}%"></div>
+                    </div>
+                    
+                    <div class="progress-text">
+                        {{ item.completion_percentage }}% Complete
+                    </div>
+                    
+                    <a href="{% url 'coding:exercise_list' item.lesson.id %}" class="btn-practice">
+                        {% if item.completed_exercises == item.total_exercises %}
+                            ✓ Review Exercises
+                        {% else %}
+                            Start Practicing →
+                        {% endif %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📚</div>
+            <h2>No Exercises Available Yet</h2>
+            <p>Complete lessons first to unlock their practice exercises!</p>
+            <p style="color: #9ca3af; font-size: 0.875rem;">
+                💡 Tip: Exercises become available after you complete each lesson
+            </p>
+            <a href="{% url 'learning:curriculum' %}" class="btn-primary">
+                Browse Curriculum →
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+

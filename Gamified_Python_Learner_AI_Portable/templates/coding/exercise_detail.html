@@ -1,0 +1,1197 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ exercise.title }} - Code Challenge{% endblock %}
+
+{% block extra_css %}
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #0d1117;
+        color: #c9d1d9;
+        overflow: hidden;
+    }
+    
+    .exercise-wrapper {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .top-bar {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        z-index: 100;
+        flex-shrink: 0;
+    }
+    
+    .top-bar-left h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .top-bar-meta {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 0.8125rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .badge-easy { background: #10b981; color: white; }
+    .badge-medium { background: #f59e0b; color: white; }
+    .badge-hard { background: #ef4444; color: white; }
+    .badge-solved { background: #059669; color: white; }
+    
+    .top-bar-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.5);
+    }
+    
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .btn-icon {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-icon:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .main-container {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 350px 1fr 400px;
+        gap: 0;
+        min-height: 0;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .panel {
+        background: #0d1117;
+        border-right: 1px solid #30363d;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        height: 100%;
+    }
+    
+    .panel:last-child {
+        border-right: none;
+    }
+    
+    .panel-header {
+        background: #161b22;
+        padding: 0.875rem 1.25rem;
+        border-bottom: 1px solid #30363d;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #f0f6fc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .panel-content {
+        flex: 1;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        padding: 1.5rem;
+        padding-bottom: 5rem !important;
+        min-height: 0;
+        max-height: none !important;
+    }
+    
+    /* Ensure content can scroll to bottom */
+    .panel-content > *:last-child {
+        margin-bottom: 2rem;
+    }
+    
+    /* Custom Scrollbar */
+    .panel-content::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    .panel-content::-webkit-scrollbar-track {
+        background: #0d1117;
+    }
+    
+    .panel-content::-webkit-scrollbar-thumb {
+        background: #30363d;
+        border-radius: 5px;
+    }
+    
+    .panel-content::-webkit-scrollbar-thumb:hover {
+        background: #484f58;
+    }
+    
+    /* Problem Panel */
+    .problem-section {
+        margin-bottom: 2rem;
+    }
+    
+    .problem-section h3 {
+        color: #f0f6fc;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .problem-section p {
+        line-height: 1.7;
+        color: #8b949e;
+        margin-bottom: 1rem;
+    }
+    
+    .problem-section code {
+        background: #161b22;
+        border: 1px solid #30363d;
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.875rem;
+        color: #79c0ff;
+    }
+    
+    .test-case {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .test-case-header {
+        font-weight: 600;
+        color: #f0f6fc;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .test-case-content {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8125rem;
+        color: #8b949e;
+        line-height: 1.6;
+    }
+    
+    .test-case-content strong {
+        color: #79c0ff;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+    
+    /* Code Editor Panel */
+    .editor-panel {
+        background: #0d1117;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .editor-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .CodeMirror {
+        height: 100% !important;
+        font-family: 'Fira Code', monospace !important;
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+    }
+    
+    .editor-footer {
+        background: #161b22;
+        border-top: 1px solid #30363d;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .editor-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .editor-info {
+        font-size: 0.8125rem;
+        color: #8b949e;
+    }
+    
+    /* Results Panel */
+    .result-item {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #30363d;
+    }
+    
+    .result-item.success {
+        border-left-color: #238636;
+        background: rgba(46, 160, 67, 0.1);
+    }
+    
+    .result-item.error {
+        border-left-color: #da3633;
+        background: rgba(218, 54, 51, 0.1);
+    }
+    
+    .result-item.info {
+        border-left-color: #388bfd;
+        background: rgba(56, 139, 253, 0.1);
+    }
+    
+    .result-header {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        margin-bottom: 0.75rem;
+        color: #f0f6fc;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .result-content {
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #8b949e;
+    }
+    
+    /* Code Output Console */
+    .code-output-console {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 1rem;
+        font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        color: #3fb950;
+        overflow-x: auto;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+    
+    .code-output-console::before {
+        content: '$ python output';
+        display: block;
+        color: #8b949e;
+        font-size: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #21262d;
+        font-weight: 500;
+    }
+    
+    .code-output-console.error {
+        color: #f85149;
+        border-color: #da3633;
+    }
+    
+    .code-output-console.error::before {
+        content: '$ python error';
+        color: #f85149;
+        border-bottom-color: #4c1f1f;
+    }
+    
+    .code-output-console pre {
+        font-family: inherit;
+        font-size: inherit;
+        color: inherit;
+    }
+    
+    .result-code {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8125rem;
+        overflow-x: auto;
+        color: #ff7b72;
+    }
+    
+    .test-results {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #30363d;
+    }
+    
+    .test-result {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        background: #0d1117;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-family: 'Fira Code', monospace;
+    }
+    
+    .test-result.passed {
+        color: #3fb950;
+    }
+    
+    .test-result.failed {
+        color: #f85149;
+    }
+    
+    .hint-item {
+        background: rgba(187, 128, 9, 0.15);
+        border-left: 4px solid #d29922;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .hint-header {
+        font-weight: 600;
+        color: #d29922;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .hint-content {
+        color: #e6edf3;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(13, 17, 23, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .loading-overlay.active {
+        display: flex;
+    }
+    
+    .loading-content {
+        text-align: center;
+        color: #f0f6fc;
+    }
+    
+    .spinner {
+        border: 4px solid #30363d;
+        border-top: 4px solid #f59e0b;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .loading-subtext {
+        font-size: 0.875rem;
+        color: #8b949e;
+    }
+    
+    /* Animations */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .result-item {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    /* Responsive - Mobile First Approach */
+    @media (max-width: 1400px) {
+        .main-container {
+            grid-template-columns: 300px 1fr 350px;
+        }
+    }
+    
+    @media (max-width: 1024px) {
+        .main-container {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto;
+        }
+        
+        .panel {
+            border-right: none;
+            border-bottom: 1px solid #30363d;
+            min-height: 400px;
+        }
+        
+        .panel:last-child {
+            border-bottom: none;
+        }
+        
+        .top-bar {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .top-bar-actions {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        
+        .top-bar-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .exercise-wrapper {
+            height: auto;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            padding: 0.75rem 1rem;
+        }
+        
+        .top-bar-left h1 {
+            font-size: 1rem;
+        }
+        
+        .top-bar-meta {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .top-bar-actions {
+            flex-direction: column;
+        }
+        
+        .top-bar-actions .btn {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .main-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        
+        .panel {
+            min-height: 300px;
+            max-height: 60vh;
+        }
+        
+        .panel-header {
+            padding: 0.75rem 1rem;
+            font-size: 0.8125rem;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+            padding-bottom: 3rem !important;
+        }
+        
+        .CodeMirror {
+            font-size: 14px !important;
+        }
+        
+        .editor-footer {
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+        }
+        
+        .editor-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+        
+        .editor-actions .btn {
+            width: 100%;
+        }
+        
+        .editor-info {
+            font-size: 0.75rem;
+            text-align: center;
+        }
+        
+        /* Touch-optimized buttons */
+        .btn {
+            min-height: 44px; /* iOS touch target size */
+            touch-action: manipulation;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .top-bar-left h1 {
+            font-size: 0.875rem;
+        }
+        
+        .top-bar-meta {
+            font-size: 0.7rem;
+        }
+        
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+        }
+        
+        .panel-header {
+            font-size: 0.75rem;
+            padding: 0.625rem 0.875rem;
+        }
+        
+        .CodeMirror {
+            font-size: 13px !important;
+        }
+        
+        .problem-section h3 {
+            font-size: 0.875rem;
+        }
+        
+        .problem-section p {
+            font-size: 0.8125rem;
+        }
+        
+        .test-case {
+            padding: 0.75rem;
+        }
+    }
+    
+    /* Cross-browser compatibility */
+    .main-container {
+        display: -ms-grid;
+        display: grid;
+        -ms-grid-columns: 350px 1fr 400px;
+    }
+    
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .btn:hover {
+            transform: none;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        
+        .nav-menu a:hover {
+            transform: none;
+        }
+        
+        .nav-menu a:active {
+            transform: translateY(0);
+            background: rgba(255, 255, 255, 0.2);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exercise-wrapper">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <h1>
+                {{ exercise.get_difficulty_display_emoji }}
+                {{ exercise.title }}
+                {% if is_solved %}
+                    <span class="badge badge-solved">✓ Solved</span>
+                {% endif %}
+            </h1>
+            <div class="top-bar-meta">
+                <span class="badge badge-{{ exercise.difficulty }}">{{ exercise.get_difficulty_display }}</span>
+                <span>⭐ {{ exercise.xp_reward }} XP</span>
+                <span>📚 {{ lesson.title }}</span>
+            </div>
+        </div>
+        <div class="top-bar-actions">
+            <button id="resetBtn" class="btn btn-secondary" title="Reset to starter code">
+                ↻ Reset
+            </button>
+            <button id="runBtn" class="btn btn-secondary" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none;">
+                <span>▶ Run Code</span>
+            </button>
+            <button id="submitBtn" class="btn btn-primary">
+                <span>✓ Submit Solution</span>
+            </button>
+            <a href="{% url 'coding:exercise_list' lesson.id %}" class="btn btn-secondary">
+                ← Back
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Left Panel: Problem Description -->
+        <div class="panel">
+            <div class="panel-header">
+                📋 Problem Description
+            </div>
+            <div class="panel-content">
+                <div class="problem-section">
+                    {{ exercise.description|safe|linebreaks }}
+                </div>
+                
+                {% if visible_test_cases %}
+                    <div class="problem-section">
+                        <h3>📝 Example Test Cases</h3>
+                        {% for test in visible_test_cases %}
+                            <div class="test-case">
+                                <div class="test-case-header">Test Case {{ forloop.counter }}</div>
+                                <div class="test-case-content">
+                                    <strong>Input:</strong> {{ test.input_data }}<br>
+                                    <strong>Expected:</strong> {{ test.expected_output }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="btn-group">
+                    <button id="hintBtn" class="btn btn-secondary">
+                        💡 Get Hint
+                    </button>
+                    {% if previous_submissions.count >= 3 %}
+                        <button id="solutionBtn" class="btn btn-secondary">
+                            🔓 Show Solution
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <div id="hintsContainer" style="margin-top: 1.5rem;"></div>
+            </div>
+        </div>
+        
+        <!-- Middle Panel: Code Editor -->
+        <div class="panel editor-panel">
+            <div class="panel-header">
+                <span>💻 Code Editor (Python)</span>
+                <span class="editor-info">Ctrl+R to Run • Ctrl+Enter to Submit</span>
+            </div>
+            <div class="editor-container">
+                <textarea id="codeEditor">{{ exercise.starter_code }}</textarea>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Results -->
+        <div class="panel">
+            <div class="panel-header">
+                📊 Test Results
+            </div>
+            <div class="panel-content" id="resultsPanel">
+                <div class="result-item info">
+                    <div class="result-header">ℹ️ Ready to Code!</div>
+                    <div class="result-content">
+                        Write your solution in the code editor and click <strong>"Submit Solution"</strong> to test your code against all test cases.
+                        <br><br>
+                        Your code will be evaluated by AI for correctness, efficiency, and best practices.
+                    </div>
+                </div>
+                
+                {% if previous_submissions %}
+                    <div class="result-item" style="border-left-color: #6e7681;">
+                        <div class="result-header">📜 Previous Attempts</div>
+                        <div class="result-content">
+                            {% for submission in previous_submissions %}
+                                <div class="test-result {% if submission.is_correct %}passed{% else %}failed{% endif %}">
+                                    {% if submission.is_correct %}✓{% else %}✗{% endif %}
+                                    Attempt {{ forloop.counter }} - {{ submission.passed_tests }}/{{ submission.total_tests }} tests
+                                    <span style="color: #8b949e; margin-left: auto;">{{ submission.submitted_at|date:"M d, H:i" }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div class="loading-text">🤖 AI is evaluating your code...</div>
+        <div class="loading-subtext">This may take a few seconds</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+
+<script>
+    // Initialize CodeMirror with Monokai theme (VS Code Dark+ like)
+    const editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+        mode: 'python',
+        theme: 'monokai',
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        lineWrapping: false,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        extraKeys: {
+            "Ctrl-Enter": function() {
+                document.getElementById('submitBtn').click();
+            },
+            "Ctrl-R": function() {
+                document.getElementById('runBtn').click();
+                return false;
+            },
+            "Tab": function(cm) {
+                cm.replaceSelection("    ");
+            }
+        }
+    });
+    
+    // Store starter code
+    const starterCode = `{{ exercise.starter_code|escapejs }}`;
+    let currentHintIndex = 0;
+    
+    // Reset button
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        if (confirm('⚠️ Reset code to starter template? All your changes will be lost.')) {
+            editor.setValue(starterCode);
+        }
+    });
+    
+    // Run button (quick syntax check)
+    document.getElementById('runBtn').addEventListener('click', async function() {
+        const code = editor.getValue().trim();
+        
+        if (!code) {
+            alert('⚠️ Please write some code before running!');
+            return;
+        }
+        
+        // Disable buttons
+        this.disabled = true;
+        
+        try {
+            const response = await fetch('{% url "coding:run_code" exercise.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({ code: code }),
+            });
+            
+            const result = await response.json();
+            
+            if (result.success && result.syntax_ok) {
+                displayRunResults(result);
+            } else if (result.success && !result.syntax_ok) {
+                displaySyntaxError(result);
+            } else {
+                displayError(result.error || 'Failed to run code.');
+            }
+        } catch (error) {
+            displayError('Network error: ' + error.message);
+        } finally {
+            this.disabled = false;
+        }
+    });
+    
+    // Submit button (full AI evaluation)
+    document.getElementById('submitBtn').addEventListener('click', async function() {
+        const code = editor.getValue().trim();
+        
+        if (!code || code === starterCode.trim()) {
+            alert('⚠️ Please write some code before submitting!');
+            return;
+        }
+        
+        // Disable submit button and show loading
+        this.disabled = true;
+        document.getElementById('loadingOverlay').classList.add('active');
+        
+        try {
+            const response = await fetch('{% url "coding:submit_code" exercise.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({ code: code }),
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                displayResults(result);
+            } else {
+                displayError(result.error || 'Submission failed. Please try again.');
+            }
+        } catch (error) {
+            displayError('Network error: ' + error.message);
+        } finally {
+            this.disabled = false;
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+    });
+    
+    // Hint button
+    document.getElementById('hintBtn')?.addEventListener('click', async function() {
+        try {
+            const response = await fetch('{% url "coding:get_hint" exercise.id %}?hint_index=' + currentHintIndex);
+            const result = await response.json();
+            
+            if (result.success) {
+                const hintsContainer = document.getElementById('hintsContainer');
+                const hintDiv = document.createElement('div');
+                hintDiv.className = 'hint-item';
+                hintDiv.innerHTML = `
+                    <div class="hint-header">💡 Hint ${currentHintIndex + 1}</div>
+                    <div class="hint-content">${result.hint}</div>
+                `;
+                hintsContainer.appendChild(hintDiv);
+                currentHintIndex++;
+                
+                if (!result.has_more_hints) {
+                    this.disabled = true;
+                    this.textContent = 'No more hints';
+                }
+            } else {
+                alert(result.error);
+                this.disabled = true;
+            }
+        } catch (error) {
+            alert('Error getting hint: ' + error.message);
+        }
+    });
+    
+    // Solution button
+    document.getElementById('solutionBtn')?.addEventListener('click', async function() {
+        if (!confirm('⚠️ Are you sure? Viewing the solution will not award XP if you submit it.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('{% url "coding:get_solution" exercise.id %}');
+            const result = await response.json();
+            
+            if (result.success) {
+                editor.setValue(result.solution_code);
+                alert('✓ Solution loaded! Study it carefully and try to understand the approach.');
+            } else {
+                alert(result.error);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+    
+    function displayResults(result) {
+        const panel = document.getElementById('resultsPanel');
+        let html = '';
+        
+        if (result.is_correct) {
+            html += `
+                <div class="result-item success">
+                    <div class="result-header">🎉 Excellent! All Tests Passed!</div>
+                    <div class="result-content">
+                        ${result.feedback || 'Your solution is correct!'}
+                        ${result.xp_awarded > 0 ? `<br><br><strong style="color: #3fb950;">+${result.xp_awarded} XP Earned! 🌟</strong>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Show badge notifications
+            if (result.badges_earned && result.badges_earned.length > 0) {
+                result.badges_earned.forEach(badge => {
+                    html += `
+                        <div class="result-item success" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.1);">
+                            <div class="result-header">🏆 New Badge Earned!</div>
+                            <div class="result-content">
+                                <div style="font-size: 3rem; text-align: center; margin: 1rem 0;">${badge.icon}</div>
+                                <div style="text-align: center; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">${badge.name}</div>
+                                <div style="text-align: center; color: #f59e0b; font-weight: 600;">+${badge.xp_reward} Bonus XP!</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        } else {
+            html += `
+                <div class="result-item error">
+                    <div class="result-header">❌ Some Tests Failed</div>
+                    <div class="result-content">
+                        ${result.feedback || 'Your code didn\'t pass all test cases.'}
+                        ${result.error_message ? `<div class="result-code">${escapeHtml(result.error_message)}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Test results
+        if (result.test_results && result.test_results.length > 0) {
+            html += '<div class="result-item" style="border-left-color: #6e7681;"><div class="test-results">';
+            html += `<strong style="color: #f0f6fc;">Test Results (${result.passed_tests}/${result.total_tests})</strong>`;
+            result.test_results.forEach((test, index) => {
+                html += `
+                    <div class="test-result ${test.passed ? 'passed' : 'failed'}">
+                        ${test.passed ? '✓' : '✗'} Test ${index + 1}: ${escapeHtml(test.details || test.message || 'Check output')}
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+        }
+        
+        // Suggestions
+        if (result.suggestions) {
+            html += `
+                <div class="result-item info">
+                    <div class="result-header">💡 Suggestions for Improvement</div>
+                    <div class="result-content">${result.suggestions}</div>
+                </div>
+            `;
+        }
+        
+        // Encouragement
+        if (result.encouragement && !result.is_correct) {
+            html += `
+                <div class="result-item info">
+                    <div class="result-header">💪 Keep Going!</div>
+                    <div class="result-content">${result.encouragement}</div>
+                </div>
+            `;
+        }
+        
+        panel.innerHTML = html;
+        
+        // Update solved badge in top bar if exercise is solved
+        if (result.is_correct && result.xp_awarded > 0) {
+            const topBarLeft = document.querySelector('.top-bar-left h1');
+            const solvedBadge = topBarLeft.querySelector('.badge-solved');
+            if (!solvedBadge) {
+                const badge = document.createElement('span');
+                badge.className = 'badge badge-solved';
+                badge.textContent = '✓ Solved';
+                topBarLeft.appendChild(badge);
+            }
+        }
+    }
+    
+    function displayRunResults(result) {
+        const panel = document.getElementById('resultsPanel');
+        let html = '';
+        
+        if (result.execution_ok) {
+            // Success - show output
+            html += `
+                <div class="result-item success">
+                    <div class="result-header">✅ ${result.message}</div>
+                    <div class="result-content">
+                        <div style="margin-bottom: 10px; color: #3fb950; font-weight: 600;">
+                            Your code executed successfully!
+                        </div>
+                        <div style="font-size: 0.85rem; color: #8b949e; margin-bottom: 8px;">
+                            📤 Console Output:
+                        </div>
+                        <div class="code-output-console">
+                            <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(result.output)}</pre>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 0.9rem; color: #8b949e;">
+                            💡 Ready to submit? Click <strong style="color: #3fb950;">"Submit Solution"</strong> for full AI evaluation!
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (result.execution_ok === false) {
+            // Runtime error
+            html += `
+                <div class="result-item error">
+                    <div class="result-header">❌ ${result.message}</div>
+                    <div class="result-content">
+                        <div style="margin-bottom: 10px; color: #f85149; font-weight: 600;">
+                            Runtime Error Occurred
+                        </div>
+                        <div style="font-size: 0.85rem; color: #8b949e; margin-bottom: 8px;">
+                            🐛 Error Details:
+                        </div>
+                        <div class="code-output-console error">
+                            <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; color: #f85149;">${escapeHtml(result.error_message)}</pre>
+                        </div>
+                        ${result.output ? `
+                            <div style="margin-top: 12px; font-size: 0.85rem; color: #8b949e; margin-bottom: 8px;">
+                                📤 Output before error:
+                            </div>
+                            <div class="code-output-console">
+                                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(result.output)}</pre>
+                            </div>
+                        ` : ''}
+                        <div style="margin-top: 12px; font-size: 0.9rem; color: #8b949e;">
+                            💡 Tip: Check the error message and fix your code before submitting.
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Just syntax check (old behavior fallback)
+            html += `
+                <div class="result-item success">
+                    <div class="result-header">✓ Syntax Check Passed!</div>
+                    <div class="result-content">
+                        ${result.message}
+                        <br><br>
+                        <strong style="color: #3fb950;">Your code is syntactically correct!</strong>
+                    </div>
+                </div>
+            `;
+        }
+        
+        panel.innerHTML = html;
+    }
+    
+    function displaySyntaxError(result) {
+        const panel = document.getElementById('resultsPanel');
+        panel.innerHTML = `
+            <div class="result-item error">
+                <div class="result-header">${result.message}</div>
+                <div class="result-content">
+                    ${result.error_message ? `<div class="result-code">${escapeHtml(result.error_message)}</div>` : ''}
+                    <br>
+                    Please fix the syntax error and try again.
+                </div>
+            </div>
+        `;
+    }
+    
+    function displayError(message) {
+        const panel = document.getElementById('resultsPanel');
+        panel.innerHTML = `
+            <div class="result-item error">
+                <div class="result-header">⚠️ Error</div>
+                <div class="result-content">${escapeHtml(message)}</div>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

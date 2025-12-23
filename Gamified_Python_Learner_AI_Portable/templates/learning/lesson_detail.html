@@ -1,0 +1,491 @@
+{% extends 'base/base.html' %}
+{% load markdown_extras %}
+
+{% block title %}{{ lesson.title }} - Python Learner AI{% endblock %}
+
+{% block extra_css %}
+<!-- Prism.js Syntax Highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .lesson-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 20px 4rem;
+    }
+    
+    .lesson-breadcrumb {
+        margin-bottom: 2rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .lesson-breadcrumb a {
+        color: #667eea;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .lesson-breadcrumb a:hover {
+        color: #764ba2;
+    }
+    
+    .lesson-breadcrumb span {
+        margin: 0 0.5rem;
+    }
+    
+    .lesson-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 3rem;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        margin-bottom: 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .lesson-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.05)"/></svg>');
+        opacity: 0.5;
+    }
+    
+    .lesson-header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .lesson-header h1 {
+        color: white;
+        margin-bottom: 1rem;
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .lesson-meta {
+        display: flex;
+        gap: 2rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.95rem;
+        font-weight: 500;
+        flex-wrap: wrap;
+    }
+    
+    .lesson-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .lesson-content {
+        background: white;
+        padding: 3rem;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2.5rem;
+        line-height: 1.8;
+        color: #1f2937;
+    }
+    
+    .lesson-content h1 {
+        color: #111827;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 2.5rem 0 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid #667eea;
+    }
+    
+    .lesson-content h2 {
+        color: #667eea;
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 2.5rem 0 1.25rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .lesson-content h3 {
+        color: #764ba2;
+        font-size: 1.375rem;
+        font-weight: 600;
+        margin: 2rem 0 1rem;
+    }
+    
+    .lesson-content h4 {
+        color: #4b5563;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 1.5rem 0 0.75rem;
+    }
+    
+    .lesson-content p {
+        margin: 1.25rem 0;
+        color: #374151;
+        font-size: 1.0625rem;
+    }
+    
+    .lesson-content ul, .lesson-content ol {
+        margin: 1.25rem 0;
+        padding-left: 2rem;
+        color: #374151;
+    }
+    
+    .lesson-content li {
+        margin: 0.75rem 0;
+        line-height: 1.7;
+    }
+    
+    .lesson-content strong {
+        color: #111827;
+        font-weight: 600;
+    }
+    
+    .lesson-content code {
+        background: #f3f4f6;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        color: #d63384;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+    
+    .lesson-content pre {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 1.75rem;
+        border-radius: 12px;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #334155;
+        position: relative;
+    }
+    
+    .lesson-content pre code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        font-size: 0.95rem;
+        font-weight: 400;
+        line-height: 1.7;
+    }
+    
+    .lesson-content pre[class*="language-"]::before {
+        content: attr(data-language);
+        position: absolute;
+        top: 0.5rem;
+        right: 1rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-family: 'Inter', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+    
+    .lesson-content blockquote {
+        border-left: 4px solid #667eea;
+        padding-left: 1.5rem;
+        margin: 1.5rem 0;
+        color: #4b5563;
+        font-style: italic;
+        background: #f9fafb;
+        padding: 1rem 1.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .lesson-content a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+    
+    .lesson-content a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+    
+    .lesson-content hr {
+        border: none;
+        border-top: 2px solid #e5e7eb;
+        margin: 2.5rem 0;
+    }
+    
+    /* Code highlighting improvements */
+    .lesson-content pre code.language-python::selection {
+        background: rgba(102, 126, 234, 0.3);
+    }
+    
+    .lesson-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn {
+        padding: 0.875rem 1.75rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9375rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .btn-secondary:hover {
+        background: #e5e7eb;
+        transform: translateY(-2px);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-disabled {
+        background: #e5e7eb;
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+    
+    .completed-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .lesson-header {
+            padding: 2rem;
+        }
+        
+        .lesson-header h1 {
+            font-size: 1.75rem;
+        }
+        
+        .lesson-content {
+            padding: 1.5rem;
+        }
+        
+        .lesson-content h2 {
+            font-size: 1.5rem;
+        }
+        
+        .lesson-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .navigation-buttons {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lesson-container">
+    <div class="lesson-breadcrumb">
+        <a href="{% url 'learning:curriculum' %}">← Curriculum</a>
+        <span>/</span>
+        <span>{{ module.title }}</span>
+        <span>/</span>
+        <strong>{{ lesson.title }}</strong>
+    </div>
+    
+    <div class="lesson-header">
+        <div class="lesson-header-content">
+            <h1>{{ lesson.title }}</h1>
+            <div class="lesson-meta">
+                <span>📚 {{ module.title }}</span>
+                <span>⏱️ {{ lesson.estimated_time }} min</span>
+                <span>⭐ {{ lesson.xp_reward }} XP</span>
+                {% if is_completed %}
+                    <span class="completed-badge">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                        Completed
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="lesson-content" id="lesson-content">
+        {{ lesson.content|markdown }}
+    </div>
+    
+    <div class="lesson-actions">
+        <div class="navigation-buttons">
+            {% if previous_lesson %}
+                <a href="{% url 'learning:lesson_detail' previous_lesson.id %}" class="btn btn-secondary">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    Previous
+                </a>
+            {% endif %}
+        </div>
+        
+        <div class="navigation-buttons">
+            {% if not is_completed %}
+                <form method="post" action="{% url 'learning:mark_complete' lesson.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                        Mark as Complete
+                    </button>
+                </form>
+            {% else %}
+                <span class="btn btn-disabled">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    Already Completed
+                </span>
+                
+                <!-- Practice Exercises Button (only shown when lesson is completed) -->
+                <a href="{% url 'coding:exercise_list' lesson.id %}" class="btn btn-primary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+                    </svg>
+                    Practice Exercises
+                </a>
+            {% endif %}
+            
+            {% if next_lesson %}
+                <a href="{% url 'learning:lesson_detail' next_lesson.id %}" class="btn btn-primary">
+                    Next Lesson
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </a>
+            {% else %}
+                <a href="{% url 'learning:curriculum' %}" class="btn btn-primary">
+                    Back to Curriculum
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Prism.js for Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+    // Initialize Prism.js on code blocks
+    document.addEventListener('DOMContentLoaded', function() {
+        Prism.highlightAll();
+        
+        // Add copy button to code blocks
+        document.querySelectorAll('pre').forEach(function(pre) {
+            const button = document.createElement('button');
+            button.className = 'copy-btn';
+            button.innerHTML = '📋 Copy';
+            button.style.cssText = 'position:absolute;top:0.5rem;right:4rem;background:#334155;color:#94a3b8;border:none;padding:0.25rem 0.75rem;border-radius:4px;cursor:pointer;font-size:0.75rem;font-weight:600;transition:all 0.2s;';
+            
+            button.addEventListener('click', function() {
+                const code = pre.querySelector('code');
+                navigator.clipboard.writeText(code.textContent).then(function() {
+                    button.innerHTML = '✓ Copied!';
+                    button.style.background = '#10b981';
+                    button.style.color = 'white';
+                    setTimeout(function() {
+                        button.innerHTML = '📋 Copy';
+                        button.style.background = '#334155';
+                        button.style.color = '#94a3b8';
+                    }, 2000);
+                });
+            });
+            
+            button.addEventListener('mouseenter', function() {
+                button.style.background = '#475569';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                if (button.innerHTML === '📋 Copy') {
+                    button.style.background = '#334155';
+                }
+            });
+            
+            pre.style.position = 'relative';
+            pre.appendChild(button);
+        });
+    });
+</script>
+{% endblock %}
+
